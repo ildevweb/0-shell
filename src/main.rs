@@ -34,75 +34,74 @@ fn main() {
         let mut input = String::new();
         let bytes_read = std::io::stdin().read_line(&mut input);
 
+        //println!("{}", input);
         match bytes_read {
             Ok(0) => {
                 println!();
                 break;
             }
             Ok(_) => {
-                for command_str in parser::split_and_parsing_commands(&input) {
-                    let mut current_input = command_str.to_string();
-                    loop {
-                        match parser::parse_args(&current_input) {
-                            Ok(args) => {
-                                if !args.is_empty() {
-                                    let command = args[0];
-                                    let command_args: Vec<&str> = args[1..].to_vec();
-                                    match command {
-                                        "echo" => command::echo::echo(command_args),
-                                        "cd" => command::cd::cd(&command_args),
-                                        "pwd" => command::pwd::pwd(&command_args),
-                                        "cat" => command::cat::cat(&command_args),
-                                        "mkdir" => command::mkdir::mkdir(&mut command_args.to_vec()),
-                                        "cp" => command::cp::cp(&command_args),
-                                        "mv" => command::mv::mv(&mut command_args.to_vec()),
-                                        "help" => command::help::help(),
-                                        "clear" => command::clear::clear(),
-                                        "rm" => command::rm::rm(&mut command_args.to_vec()),
-                                        "ls" => command::ls::ls(&command_args)
-                                            .expect("Failed to execute ls command"),
-                                        "exit" => {
-                                            return;
-                                        }
-                                        _ => eprintln!("Command '{}' not found", command),
+                //println!("this is the commands: {:?}", parser::split_and_parsing_commands(&input));
+                loop {
+                    match parser::parse_args(&input) {
+                        Ok(args) => {
+                            //println!("{:?}", args);
+                            if !args.is_empty() {
+                                let command = args[0];
+                                let command_args: Vec<&str> = args[1..].to_vec();
+                                match command {
+                                    "echo" => command::echo::echo(command_args),
+                                    "cd" => command::cd::cd(&command_args),
+                                    "pwd" => command::pwd::pwd(&command_args),
+                                    "cat" => command::cat::cat(&command_args),
+                                    "mkdir" => command::mkdir::mkdir(&mut command_args.to_vec()),
+                                    "cp" => command::cp::cp(&command_args),
+                                    "mv" => command::mv::mv(&mut command_args.to_vec()),
+                                    "help" => command::help::help(),
+                                    "clear" => command::clear::clear(),
+                                    "rm" => command::rm::rm(&mut command_args.to_vec()),
+                                    "ls" => command::ls::ls(&command_args).expect("Failed to execute ls command"),
+                                    "exit" => {
+                                        return;
                                     }
+                                    _ => eprintln!("Command '{}' not found", command),
                                 }
+                            }
+                            break;
+                        }
+                        Err(e) => match e {
+                            parser::ParseError::UnclosedSingleQuote => {
+                                print!("quote> ");
+                                io::stdout().flush().unwrap();
+                            }
+                            parser::ParseError::UnclosedDoubleQuote => {
+                                print!("dquote> ");
+                                io::stdout().flush().unwrap();
+                            }
+                            parser::ParseError::UnclosedBackslash => {
+                                print!("> ");
+                                io::stdout().flush().unwrap();
+                            }
+                            parser::ParseError::EmptyInput => {
+                                println!("Input is empty.");
                                 break;
                             }
-                            Err(e) => match e {
-                                parser::ParseError::UnclosedSingleQuote => {
-                                    print!("quote> ");
-                                    io::stdout().flush().unwrap();
-                                }
-                                parser::ParseError::UnclosedDoubleQuote => {
-                                    print!("dquote> ");
-                                    io::stdout().flush().unwrap();
-                                }
-                                parser::ParseError::UnclosedBackslash => {
-                                    print!("> ");
-                                    io::stdout().flush().unwrap();
-                                }
-                                parser::ParseError::EmptyInput => {
-                                    println!("Input is empty.");
-                                    break;
-                                }
-                                parser::ParseError::Other(msg) => {
-                                    println!("Error: {}", msg);
-                                    break;
-                                }
-                            },
-                            _ => {
-                                println!("rush:");
+                            parser::ParseError::Other(msg) => {
+                                println!("Error: {}", msg);
                                 break;
                             }
+                        },
+                        _ => {
+                            println!("rush:");
+                            break;
                         }
                     }
                 }
-            }
+            },
             _ => {
-                println!("Error:");
-                break;
+                eprintln!("Error reading input");
+                break; 
             }
-        }
+        }  
     }
 }
