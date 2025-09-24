@@ -1,4 +1,8 @@
 pub fn echo(args: Vec<&str>) {
-    let result = args.join(" ");  // Join the arguments with spaces
-    println!("{}", result);  // Print the result
+    let output = args.join(" ");
+    println!("{}", output);
+}
+
+pub fn echo_command(args: Vec<&str>) {
+    echo(args);
 }

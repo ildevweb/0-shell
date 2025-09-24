@@ -1,1 +1,11 @@
 pub mod echo;
+pub mod cd;
+pub mod pwd;
+pub mod cat;
+pub mod mkdir;
+pub mod cp;
+pub mod mv;
+pub mod help;
+pub mod clear;
+pub mod rm;
+pub mod ls;
