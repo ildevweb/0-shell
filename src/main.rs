@@ -71,15 +71,18 @@ fn main() {
                         }
                         Err(e) => match e {
                             parser::ParseError::UnclosedSingleQuote => {
-                                print!("quote> ");
+                                println!("quote> ");
+                                break;
                                 io::stdout().flush().unwrap();
                             }
                             parser::ParseError::UnclosedDoubleQuote => {
-                                print!("dquote> ");
+                                println!("dquote> ");
+                                break;
                                 io::stdout().flush().unwrap();
                             }
                             parser::ParseError::UnclosedBackslash => {
-                                print!("> ");
+                                println!("> ");
+                                break;
                                 io::stdout().flush().unwrap();
                             }
                             parser::ParseError::EmptyInput => {
