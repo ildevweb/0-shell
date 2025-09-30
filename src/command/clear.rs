@@ -1,7 +1,6 @@
-use std::io::Write;
+use std::io::{self, Write};
 
 pub fn clear() {
-    print!("{}[2J", 27 as char); // Clear the screen
-    print!("{}[H", 27 as char); // Move cursor to the top-left corner
-    std::io::stdout().flush().unwrap(); // Ensure the output is flushed
+    print!("\x1B[3J\x1B[2J\x1B[H");
+    io::stdout().flush().unwrap();
 }
