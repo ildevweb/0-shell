@@ -21,8 +21,7 @@ pub fn ls(args: &[&str]) -> io::Result<()> {
 
         let entries = fs::read_dir(path)?;
 
-        let mut files = Vec::new();
-        let mut dirs = Vec::new();
+        let mut names = Vec::new();
 
         for entry in entries {
             let entry = entry?;
@@ -35,19 +34,40 @@ pub fn ls(args: &[&str]) -> io::Result<()> {
             }
 
             if file_type.is_dir() {
-                dirs.push(format!("\x1b[34m{}\x1b[0m", name));
+                names.push(format!("\x1b[34m{}\x1b[0m", name));
             } else {
-                files.push(name.to_string());
+                names.push(name.to_string());
             }
         }
 
-        files.sort(); 
-        for name in files {
+
+        names.sort_by(|a, b| {
+            let ansi_re = regex::Regex::new(r"\x1b\[[0-9;]*m").unwrap();
+
+            let a_clean = ansi_re.replace_all(a, "").to_string();
+            let b_clean = ansi_re.replace_all(b, "").to_string();
+
+            let a_stripped = a_clean
+                .chars()
+                .skip_while(|c| !c.is_alphanumeric())
+                .collect::<String>();
+            let b_stripped = b_clean
+                .chars()
+                .skip_while(|c| !c.is_alphanumeric())
+                .collect::<String>();
+
+            let cmp = a_stripped.to_lowercase().cmp(&b_stripped.to_lowercase());
+
+            if cmp == std::cmp::Ordering::Equal {
+                a_clean.cmp(&b_clean)
+            } else {
+                cmp
+            }
+        });
+
+
+        for name in names {
             print!("{}  ", name);
-        }
-        dirs.sort(); 
-        for dir in dirs {
-            print!("{}  ", dir);
         }
         println!();
 
