@@ -23,6 +23,12 @@ pub fn ls(args: &[&str]) -> io::Result<()> {
 
         let mut names = Vec::new();
 
+        if flags.a {
+            names.push("\x1b[34m.\x1b[0m".to_string());
+            names.push("\x1b[34m..\x1b[0m".to_string());
+        }
+        
+
         for entry in entries {
             let entry = entry?;
             let file_type = entry.file_type()?;
@@ -33,6 +39,7 @@ pub fn ls(args: &[&str]) -> io::Result<()> {
                 continue;
             }
 
+            
             if file_type.is_dir() {
                 names.push(format!("\x1b[34m{}\x1b[0m", name));
             } else {
