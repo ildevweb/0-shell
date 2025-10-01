@@ -1,6 +1,10 @@
-use std::fs;
 use std::io;
 use std::path::Path;
+use std::fs::{self, Metadata};
+use std::os::unix::fs::PermissionsExt;
+use std::os::unix::fs::FileTypeExt;
+
+
 
 pub fn ls(args: &[&str]) -> io::Result<()> {
     let mut paths = Vec::new();
@@ -12,6 +16,52 @@ pub fn ls(args: &[&str]) -> io::Result<()> {
         paths.push(".".to_string());
     }
 
+    show_elems(paths, flags)?;
+
+    Ok(())
+}
+
+
+#[derive(Debug)]
+#[allow(non_snake_case)]
+struct Flags {
+    a: bool,
+    F: bool,
+    l: bool,
+}
+
+impl Flags {
+    fn new() -> Self {
+        Self { a: false, F: false, l: false }
+    }
+}
+
+fn parse(args: &[&str], flg: &mut Flags, paths: &mut Vec<String>) -> io::Result<()> {
+    for arg in args {
+        if arg.starts_with('-') && arg.len() > 1 {
+            let arg_flags = arg.trim_start_matches('-');
+            for f in arg_flags.chars() {
+                match f {
+                    'F' => flg.F = true,
+                    'l' => flg.l = true,
+                    'a' => flg.a = true,
+                    _ => {
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidInput, 
+                            format!("ls: invalid option -- '{}'", f)
+                        ));
+                    }
+                }
+            }
+        } else {
+            paths.push(arg.to_string());
+        }
+    }
+    Ok(())
+}
+
+
+fn show_elems(paths: Vec<String>, flags: Flags) -> io::Result<()> {
     for path_str in &paths {
         let path = Path::new(&path_str);
 
@@ -39,11 +89,16 @@ pub fn ls(args: &[&str]) -> io::Result<()> {
                 continue;
             }
 
-            
-            if file_type.is_dir() {
-                names.push(format!("\x1b[34m{}\x1b[0m", name));
+            let classified_name = if flags.F {
+                classify_with_suffix(&entry.path(), &name)
             } else {
-                names.push(name.to_string());
+                name.to_string()
+            };
+
+            if file_type.is_dir() {
+                names.push(format!("\x1b[34m{}\x1b[0m", classified_name));
+            } else {
+                names.push(classified_name);
             }
         }
 
@@ -88,40 +143,40 @@ pub fn ls(args: &[&str]) -> io::Result<()> {
 
 
 
-
-#[derive(Debug)]
-struct Flags {
-    a: bool,
-    F: bool,
-    l: bool,
-}
-
-impl Flags {
-    fn new() -> Self {
-        Self { a: false, F: false, l: false }
+pub fn classify_with_suffix(path: &Path, file_name: &str) -> String {
+    let metadata_result = fs::symlink_metadata(path);
+    if metadata_result.is_err() {
+        return file_name.to_string();
     }
-}
 
-fn parse(args: &[&str], flg: &mut Flags, paths: &mut Vec<String>) -> io::Result<()> {
-    for arg in args {
-        if arg.starts_with('-') && arg.len() > 1 {
-            let arg_flags = arg.trim_start_matches('-');
-            for f in arg_flags.chars() {
-                match f {
-                    'F' => flg.F = true,
-                    'l' => flg.l = true,
-                    'a' => flg.a = true,
-                    _ => {
-                        return Err(io::Error::new(
-                            io::ErrorKind::InvalidInput, 
-                            format!("ls: invalid option -- '{}'", f)
-                        ));
-                    }
-                }
-            }
-        } else {
-            paths.push(arg.to_string());
+    let metadata = metadata_result.unwrap();
+    let file_type = metadata.file_type();
+
+    if file_type.is_dir() {
+        return format!("{}/", file_name);
+    }
+
+    if file_type.is_symlink() {
+        return format!("{}@", file_name);
+    }
+
+    #[cfg(unix)]
+    if file_type.is_fifo() {
+        return format!("{}|", file_name);
+    }
+
+    #[cfg(unix)]
+    if file_type.is_socket() {
+        return format!("{}=", file_name);
+    }
+
+    #[cfg(unix)]
+    {
+        let mode = metadata.permissions().mode();
+        if mode & 0o111 != 0 {
+            return format!("{}*", file_name);
         }
     }
-    Ok(())
+
+    file_name.to_string()
 }
