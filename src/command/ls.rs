@@ -1,5 +1,6 @@
+use std::fs;
 use std::io;
-
+use std::path::Path;
 
 pub fn ls(args: &[&str]) -> io::Result<()> {
     let mut paths = Vec::new();
@@ -11,12 +12,52 @@ pub fn ls(args: &[&str]) -> io::Result<()> {
         paths.push(".".to_string());
     }
 
-    println!("this is the paths: {:?}", paths);
-    println!("this is the flags: {:?}", flags);
-    
+    for path_str in &paths {
+        let path = Path::new(&path_str);
+
+        if paths.len() > 1 {
+            println!("{}:", path.display());
+        }
+
+        let entries = fs::read_dir(path)?;
+
+        let mut files = Vec::new();
+        let mut dirs = Vec::new();
+
+        for entry in entries {
+            let entry = entry?;
+            let file_type = entry.file_type()?;
+            let file_name = entry.file_name();
+            let name = file_name.to_string_lossy();
+
+            if !flags.a && name.starts_with('.') {
+                continue;
+            }
+
+            if file_type.is_dir() {
+                dirs.push(format!("\x1b[34m{}\x1b[0m", name));
+            } else {
+                files.push(name.to_string());
+            }
+        }
+
+        files.sort(); 
+        for name in files {
+            print!("{}  ", name);
+        }
+        dirs.sort(); 
+        for dir in dirs {
+            print!("{}  ", dir);
+        }
+        println!();
+
+        if paths.len() > 1 {
+            println!();
+        }
+    }
+
     Ok(())
 }
-
 
 
 
