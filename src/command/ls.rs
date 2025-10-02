@@ -7,6 +7,7 @@ use users::{get_user_by_uid, get_group_by_gid};
 
 
 
+
 pub fn ls(args: &[&str]) -> io::Result<()> {
     let mut paths = Vec::new();
     let mut flags = Flags::new();
@@ -193,6 +194,7 @@ pub fn classify_with_suffix(path: &Path, file_name: &str) -> String {
 fn show_long_listing(paths: Vec<String>, flags: Flags) -> io::Result<()> {
     for path_str in &paths {
         let path = Path::new(&path_str);
+        let new_path = Path::new(".");
 
         if paths.len() > 1 {
             println!("{}:", path.display());
@@ -218,6 +220,62 @@ fn show_long_listing(paths: Vec<String>, flags: Flags) -> io::Result<()> {
 
             strip_punct(&a_name).cmp(&strip_punct(&b_name))
         });
+
+
+        if flags.a {
+            let dirs = vec![".", ".."];
+            
+
+            for entry in dirs {
+                let path = Path::new(entry);
+                let metadata = fs::metadata(path)?;
+                let file_type = metadata.file_type();
+                let name_str = format!("\x1b[34m{}\x1b[0m", entry);
+
+                
+                // Permissions string
+                let perms = build_permissions_string(&metadata, &file_type);
+
+                // Number of hard links
+                let hard_links = metadata.nlink();
+
+                // Owner and group
+                let uid = metadata.uid();
+                let gid = metadata.gid();
+                let user = get_user_by_uid(uid)
+                    .and_then(|u| Some(u.name().to_string_lossy().to_string()))
+                    .unwrap_or(uid.to_string());
+                let group = get_group_by_gid(gid)
+                    .and_then(|g| Some(g.name().to_string_lossy().to_string()))
+                    .unwrap_or(gid.to_string());
+
+                // File size
+                let size = metadata.len();
+
+
+                // Modification time
+                let mtime = metadata.mtime();
+                let system_time = std::time::UNIX_EPOCH + std::time::Duration::from_secs(mtime as u64 + 60*60);
+                let datetime: DateTime<Local> = DateTime::<Local>::from(system_time);
+                //let datetime: DateTime<Local> = DateTime::from(std::time::UNIX_EPOCH + std::time::Duration::from_secs(mtime as u64));
+                let formatted_time = datetime.format("%b %e %H:%M").to_string(); // e.g., "Oct  1 14:00"
+
+
+                // File name (with suffix if -F)
+                let mut name_out = name_str.to_string();
+                if flags.F {
+                    let full_path = Path::new(entry);
+                    name_out = classify_with_suffix(&full_path, &name_out);
+                }
+
+                // Print result
+                println!("{:<10} {:<3} {:<8} {:<8} {:>6} {} {}", 
+                    perms, hard_links, user, group, size, formatted_time, name_out
+                );
+            }
+        }
+        
+
 
 
         for entry in entries {
@@ -254,10 +312,14 @@ fn show_long_listing(paths: Vec<String>, flags: Flags) -> io::Result<()> {
             // File size
             let size = metadata.len();
 
+
             // Modification time
             let mtime = metadata.mtime();
-            let datetime: DateTime<Local> = DateTime::from(std::time::UNIX_EPOCH + std::time::Duration::from_secs(mtime as u64));
+            let system_time = std::time::UNIX_EPOCH + std::time::Duration::from_secs(mtime as u64 + 60*60);
+            let datetime: DateTime<Local> = DateTime::<Local>::from(system_time);
+            //let datetime: DateTime<Local> = DateTime::from(std::time::UNIX_EPOCH + std::time::Duration::from_secs(mtime as u64));
             let formatted_time = datetime.format("%b %e %H:%M").to_string(); // e.g., "Oct  1 14:00"
+
 
             // File name (with suffix if -F)
             let mut name_out = name_str.to_string();
