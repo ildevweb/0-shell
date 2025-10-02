@@ -198,10 +198,30 @@ fn show_long_listing(paths: Vec<String>, flags: Flags) -> io::Result<()> {
             println!("{}:", path.display());
         }
 
-        let entries = fs::read_dir(path)?;
+
+        let mut entries: Vec<_> = fs::read_dir(path)?
+            .filter_map(Result::ok)
+            .collect();
+
+
+
+        entries.sort_by(|a, b| {
+            let a_name = a.file_name().to_string_lossy().to_string();
+            let b_name = b.file_name().to_string_lossy().to_string();
+
+            let strip_punct = |s: &str| {
+                s.chars()
+                    .filter(|c| c.is_alphanumeric())
+                    .collect::<String>()
+                    .to_lowercase()
+            };
+
+            strip_punct(&a_name).cmp(&strip_punct(&b_name))
+        });
+
 
         for entry in entries {
-            let entry = entry?;
+            //let entry = entry?;
             let file_type = entry.file_type()?;
             let metadata = entry.metadata()?;
             let file_name = entry.file_name();
