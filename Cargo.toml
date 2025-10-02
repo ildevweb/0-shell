@@ -6,3 +6,5 @@ edition = "2021"
 [dependencies]
 atty = "0.2"
 regex = "1"
+chrono = "0.4"
+users = "0.11"

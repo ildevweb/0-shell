@@ -1,8 +1,9 @@
 use std::io;
 use std::path::Path;
 use std::fs::{self, Metadata};
-use std::os::unix::fs::PermissionsExt;
-use std::os::unix::fs::FileTypeExt;
+use std::os::unix::fs::{PermissionsExt, FileTypeExt, MetadataExt};
+use chrono::{DateTime, Local};
+use users::{get_user_by_uid, get_group_by_gid};
 
 
 
@@ -16,7 +17,11 @@ pub fn ls(args: &[&str]) -> io::Result<()> {
         paths.push(".".to_string());
     }
 
-    show_elems(paths, flags)?;
+    if flags.l {
+        show_long_listing(paths, flags)?;
+    } else {
+        show_elems(paths, flags)?;
+    }
 
     Ok(())
 }
@@ -179,4 +184,98 @@ pub fn classify_with_suffix(path: &Path, file_name: &str) -> String {
     }
 
     file_name.to_string()
+}
+
+
+
+
+
+fn show_long_listing(paths: Vec<String>, flags: Flags) -> io::Result<()> {
+    for path_str in &paths {
+        let path = Path::new(&path_str);
+
+        if paths.len() > 1 {
+            println!("{}:", path.display());
+        }
+
+        let entries = fs::read_dir(path)?;
+
+        for entry in entries {
+            let entry = entry?;
+            let file_type = entry.file_type()?;
+            let metadata = entry.metadata()?;
+            let file_name = entry.file_name();
+            let name_str = file_name.to_string_lossy();
+
+            if !flags.a && name_str.starts_with('.') {
+                continue;
+            }
+
+            // Permissions string
+            let perms = build_permissions_string(&metadata, &file_type);
+
+            // Number of hard links
+            let hard_links = metadata.nlink();
+
+            // Owner and group
+            let uid = metadata.uid();
+            let gid = metadata.gid();
+            let user = get_user_by_uid(uid)
+                .and_then(|u| Some(u.name().to_string_lossy().to_string()))
+                .unwrap_or(uid.to_string());
+            let group = get_group_by_gid(gid)
+                .and_then(|g| Some(g.name().to_string_lossy().to_string()))
+                .unwrap_or(gid.to_string());
+
+            // File size
+            let size = metadata.len();
+
+            // Modification time
+            let mtime = metadata.mtime();
+            let datetime: DateTime<Local> = DateTime::from(std::time::UNIX_EPOCH + std::time::Duration::from_secs(mtime as u64));
+            let formatted_time = datetime.format("%b %e %H:%M").to_string(); // e.g., "Oct  1 14:00"
+
+            // File name (with suffix if -F)
+            let mut name_out = name_str.to_string();
+            if flags.F {
+                let full_path = entry.path();
+                name_out = classify_with_suffix(&full_path, &name_out);
+            }
+
+            // Print result
+            println!("{:<10} {:<3} {:<8} {:<8} {:>6} {} {}", 
+                perms, hard_links, user, group, size, formatted_time, name_out
+            );
+        }
+
+        if paths.len() > 1 {
+            println!();
+        }
+    }
+
+    Ok(())
+}
+
+
+fn build_permissions_string(metadata: &fs::Metadata, file_type: &fs::FileType) -> String {
+    let mut perms = String::new();
+
+    perms.push(if file_type.is_dir() {
+        'd'
+    } else if file_type.is_symlink() {
+        'l'
+    } else {
+        '-'
+    });
+
+    let mode = metadata.mode();
+    for i in (0..3).rev() {
+        let shift = i * 3;
+        let perm = (mode >> shift) & 0o7;
+        perms.push(if perm & 0o4 != 0 { 'r' } else { '-' });
+        perms.push(if perm & 0o2 != 0 { 'w' } else { '-' });
+        perms.push(if perm & 0o1 != 0 { 'x' } else { '-' });
+    }
+
+    perms
 }
