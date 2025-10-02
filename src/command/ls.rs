@@ -205,10 +205,14 @@ fn show_long_listing(paths: Vec<String>, flags: Flags) -> io::Result<()> {
             let file_type = entry.file_type()?;
             let metadata = entry.metadata()?;
             let file_name = entry.file_name();
-            let name_str = file_name.to_string_lossy();
+            let mut name_str = file_name.to_string_lossy();
 
             if !flags.a && name_str.starts_with('.') {
                 continue;
+            }
+
+            if file_type.is_dir() {
+                name_str = format!("\x1b[34m{}\x1b[0m", file_name.to_string_lossy()).into();
             }
 
             // Permissions string
