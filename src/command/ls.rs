@@ -102,11 +102,8 @@ fn show_elems(paths: Vec<String>, flags: Flags) -> io::Result<()> {
                 name.to_string()
             };
 
-            if file_type.is_dir() {
-                names.push(format!("\x1b[34m{}\x1b[0m", classified_name));
-            } else {
-                names.push(classified_name);
-            }
+            
+            names.push(classified_name);
         }
 
 
@@ -160,7 +157,7 @@ pub fn classify_with_suffix(path: &Path, file_name: &str) -> String {
     let file_type = metadata.file_type();
 
     if file_type.is_dir() {
-        return format!("{}/", file_name);
+        return format!("\x1b[34m{}\x1b[0m/", file_name);
     }
 
     if file_type.is_symlink() {
