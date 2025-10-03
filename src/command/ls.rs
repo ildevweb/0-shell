@@ -4,6 +4,7 @@ use std::fs::{self, Metadata};
 use std::os::unix::fs::{PermissionsExt, FileTypeExt, MetadataExt};
 use chrono::{DateTime, Local};
 use users::{get_user_by_uid, get_group_by_gid};
+use std::collections::HashMap;
 
 
 
@@ -195,6 +196,9 @@ fn show_long_listing(paths: Vec<String>, flags: Flags) -> io::Result<()> {
     for path_str in &paths {
         let path = Path::new(&path_str);
         let new_path = Path::new(".");
+        let mut blocks = 0;
+        let mut result: Vec<HashMap<&str, String>> = Vec::new();
+        let mut map = HashMap::new();
 
         if paths.len() > 1 {
             println!("{}:", path.display());
@@ -232,7 +236,8 @@ fn show_long_listing(paths: Vec<String>, flags: Flags) -> io::Result<()> {
                 let file_type = metadata.file_type();
                 let name_str = format!("\x1b[34m{}\x1b[0m", entry);
 
-                
+                blocks += metadata.blocks();
+
                 // Permissions string
                 let perms = build_permissions_string(&metadata, &file_type);
 
@@ -269,9 +274,21 @@ fn show_long_listing(paths: Vec<String>, flags: Flags) -> io::Result<()> {
                 }
 
                 // Print result
-                println!("{:<10} {:<3} {:<8} {:<8} {:>6} {} {}", 
+                /*println!("{:<10} {:<3} {:<8} {:<8} {:>6} {} {}", 
                     perms, hard_links, user, group, size, formatted_time, name_out
-                );
+                );*/
+
+                map.insert("permissions", perms);
+                map.insert("hard_links", hard_links.to_string());
+                map.insert("owner", user);
+                map.insert("group", group);
+                map.insert("size", size.to_string());
+                map.insert("time", formatted_time);
+                map.insert("name", name_out);
+
+                result.push(map);
+                map = HashMap::new();
+
             }
         }
         
@@ -292,6 +309,8 @@ fn show_long_listing(paths: Vec<String>, flags: Flags) -> io::Result<()> {
             if file_type.is_dir() {
                 name_str = format!("\x1b[34m{}\x1b[0m", file_name.to_string_lossy()).into();
             }
+
+            blocks += metadata.blocks();
 
             // Permissions string
             let perms = build_permissions_string(&metadata, &file_type);
@@ -328,9 +347,32 @@ fn show_long_listing(paths: Vec<String>, flags: Flags) -> io::Result<()> {
                 name_out = classify_with_suffix(&full_path, &name_out);
             }
 
+
             // Print result
-            println!("{:<10} {:<3} {:<8} {:<8} {:>6} {} {}", 
+            /*println!("{:<10} {:<3} {:<8} {:<8} {:>6} {} {}", 
                 perms, hard_links, user, group, size, formatted_time, name_out
+            );*/
+
+
+            map.insert("permissions", perms);
+            map.insert("hard_links", hard_links.to_string());
+            map.insert("owner", user);
+            map.insert("group", group);
+            map.insert("size", size.to_string());
+            map.insert("time", formatted_time);
+            map.insert("name", name_out);
+
+            result.push(map);
+            map = HashMap::new();
+        }
+
+        //print total blocks
+        println!("total {}", blocks/2);
+
+        //print
+        for mp in result {
+            println!("{:<10} {:<3} {:<8} {:<8} {:>6} {} {}", 
+                mp.get("permissions").unwrap(), mp.get("hard_links").unwrap(), mp.get("owner").unwrap(), mp.get("group").unwrap(), mp.get("size").unwrap(), mp.get("time").unwrap(), mp.get("name").unwrap()
             );
         }
 
