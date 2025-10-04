@@ -119,7 +119,7 @@ fn show_elems(paths: Vec<String>, flags: Flags) -> io::Result<()> {
 
 
         names.sort_by(|a, b| {
-            let ansi_re = regex::Regex::new(r"\x1b\[[0-9;]*m").unwrap();
+            let ansi_re = regex::Regex::new(r"\x1b\[[0-9;]*m/?").unwrap();
 
             let a_clean = ansi_re.replace_all(a, "").to_string();
             let b_clean = ansi_re.replace_all(b, "").to_string();
