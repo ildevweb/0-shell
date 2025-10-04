@@ -1,4 +1,4 @@
-# Rust Shell
+# 0 Shell
 
 This project is a simple command-line shell implemented in Rust. It provides basic shell functionalities such as executing commands, changing directories, and managing files.
 
@@ -14,8 +14,8 @@ To build and run the project, ensure you have Rust installed on your machine. Yo
 
 1. Clone the repository:
    ```
-   git clone <repository-url>
-   cd rust-shell
+   git clone https://github.com/ildevweb/0-shell.git
+   cd 0-shell
    ```
 
 2. Build the project:
@@ -47,8 +47,4 @@ Once the shell is running, you can enter commands as follows:
 
 ## Contributing
 
-Contributions are welcome! If you have suggestions or improvements, feel free to open an issue or submit a pull request.
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for more details.
+Ilyass Afriad ([iafriad](https://github.com/ildevweb/0-shell.git))
