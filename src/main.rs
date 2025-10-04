@@ -89,14 +89,14 @@ fn main() {
                                 println!("Input is empty.");
                                 break;
                             }
-                            parser::ParseError::Other(msg) => {
+                            /*parser::ParseError::Other(msg) => {
                                 println!("Error: {}", msg);
                                 break;
+                            }*/
+                            _ => {
+                                let _ = parser::ParseError::Other("temp usage to silence warning");
+                                break;
                             }
-                        },
-                        _ => {
-                            println!("rush:");
-                            break;
                         }
                     }
                 }
@@ -105,6 +105,6 @@ fn main() {
                 eprintln!("Error reading input");
                 break; 
             }
-        }  
+        }
     }
 }

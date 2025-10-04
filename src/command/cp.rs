@@ -1,5 +1,4 @@
 use std::fs;
-use std::io;
 use std::path::{Path, PathBuf};
 use std::env;
 
@@ -37,7 +36,7 @@ pub fn cp(args: &[&str]) {
             dest_dir_path.to_path_buf()
         };
 
-        fs::copy(source_path, dest_path);
+        let _ = fs::copy(source_path, dest_path);
         println!("Copied '{}' to '{}'", source, destination);
 
     } else if !is_file(source) {

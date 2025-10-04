@@ -1,6 +1,6 @@
 use std::io;
 use std::path::Path;
-use std::fs::{self, Metadata};
+use std::fs;
 use std::os::unix::fs::{PermissionsExt, FileTypeExt, MetadataExt};
 use chrono::{DateTime, Local};
 use users::{get_user_by_uid, get_group_by_gid};
@@ -203,7 +203,6 @@ pub fn classify_with_suffix(path: &Path, file_name: &str) -> String {
 fn show_long_listing(paths: Vec<String>, flags: Flags) -> io::Result<()> {
     for path_str in &paths {
         let path = Path::new(&path_str);
-        let new_path = Path::new(".");
         let mut blocks = 0;
         let mut result: Vec<HashMap<&str, String>> = Vec::new();
         let mut map = HashMap::new();
