@@ -45,6 +45,6 @@ Once the shell is running, you can enter commands as follows:
 - `ls` - Lists files and directories in the current directory.
 - `exit` - Exits the shell.
 
-## Contributing
+## collaborators
 
 Ilyass Afriad ([iafriad](https://github.com/ildevweb/0-shell.git))
