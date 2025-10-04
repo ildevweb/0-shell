@@ -81,8 +81,15 @@ fn show_elems(paths: Vec<String>, flags: Flags) -> io::Result<()> {
         let mut names = Vec::new();
 
         if flags.a {
-            names.push("\x1b[34m.\x1b[0m".to_string());
-            names.push("\x1b[34m..\x1b[0m".to_string());
+            let mut dot = String::from("\x1b[34m.\x1b[0m");
+            let mut dots = String::from("\x1b[34m..\x1b[0m");
+
+            if flags.F {
+                dot.push_str("/");
+                dots.push_str("/");
+            }
+            names.push(dot);
+            names.push(dots);
         }
         
 
