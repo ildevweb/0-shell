@@ -99,7 +99,11 @@ fn show_elems(paths: Vec<String>, flags: Flags) -> io::Result<()> {
             let classified_name = if flags.F {
                 classify_with_suffix(&entry.path(), &name)
             } else {
-                name.to_string()
+                if file_type.is_dir() {
+                    format!("\x1b[34m{}\x1b[0m", name)
+                } else {
+                    name.to_string()
+                }
             };
 
             
